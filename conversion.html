@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversion Funnel - Cerebrium.ai</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+        
+        .funnel-visual {
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e9d5ff;
+        }
+        
+        .funnel-stage {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .funnel-bar {
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .funnel-bar:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .stage-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .stage-name {
+            font-size: 1rem;
+        }
+        
+        .stage-value {
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+        
+        .stage-metrics {
+            text-align: right;
+        }
+        
+        .stage-percentage {
+            font-size: 1.1rem;
+        }
+        
+        .dropoff-indicator {
+            position: absolute;
+            right: -80px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #dc2626;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid;
+        }
+        
+        .metric-card.critical { border-color: #ef4444; }
+        .metric-card.warning { border-color: #f59e0b; }
+        .metric-card.good { border-color: #10b981; }
+        .metric-card.info { border-color: #3b82f6; }
+        
+        .metric-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-sublabel {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+            border-radius: 15px;
+            padding: 20px;
+            height: 400px;
+            position: relative;
+            border: 1px solid #e9d5ff;
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            color: #5b21b6;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .channel-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .channel-table th {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .channel-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .channel-table tr:hover {
+            background: #faf5ff;
+        }
+        
+        .conv-bar {
+            height: 8px;
+            background: #e9d5ff;
+            border-radius: 4px;
+            overflow: hidden;
+            width: 100px;
+            display: inline-block;
+        }
+        
+        .conv-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+            border-radius: 4px;
+        }
+        
+        .bottleneck-section {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 2px solid #fca5a5;
+        }
+        
+        .bottleneck-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #991b1b;
+            margin-bottom: 15px;
+        }
+        
+        .bottleneck-list {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .bottleneck-item {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 4px solid #dc2626;
+        }
+        
+        .bottleneck-name {
+            font-weight: 600;
+            color: #7f1d1d;
+            margin-bottom: 5px;
+        }
+        
+        .bottleneck-detail {
+            font-size: 0.9rem;
+            color: #991b1b;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .dropoff-indicator {
+                right: -60px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Conversion Funnel Analysis</h1>
+        <p class="subtitle">User journey from discovery to conversion</p>
+        
+        <div class="metrics-grid">
+            <div class="metric-card critical">
+                <div class="metric-label">Overall Conversion</div>
+                <div class="metric-value" style="color: #dc2626;">0.51%</div>
+                <div class="metric-sublabel">Impressions to Events</div>
+            </div>
+            <div class="metric-card warning">
+                <div class="metric-label">Session to User</div>
+                <div class="metric-value" style="color: #f59e0b;">48.5%</div>
+                <div class="metric-sublabel">38,327 → 18,605</div>
+            </div>
+            <div class="metric-card good">
+                <div class="metric-label">User to Event</div>
+                <div class="metric-value" style="color: #059669;">6.3%</div>
+                <div class="metric-sublabel">18,605 → 1,175</div>
+            </div>
+            <div class="metric-card info">
+                <div class="metric-label">Engagement Rate</div>
+                <div class="metric-value" style="color: #2563eb;">54.9%</div>
+                <div class="metric-sublabel">Of all sessions</div>
+            </div>
+            <div class="metric-card info">
+                <div class="metric-label">Return Rate</div>
+                <div class="metric-value" style="color: #2563eb;">21.2%</div>
+                <div class="metric-sublabel">Users who return</div>
+            </div>
+            <div class="metric-card critical">
+                <div class="metric-label">Lost Opportunities</div>
+                <div class="metric-value" style="color: #dc2626;">229.5K</div>
+                <div class="metric-sublabel">Impressions not clicked</div>
+            </div>
+        </div>
+        
+        <div class="funnel-visual">
+            <h2 class="chart-title">Main Conversion Funnel</h2>
+            
+            <div class="funnel-stage">
+                <div class="funnel-bar" style="background: linear-gradient(135deg, #6366f1, #4f46e5); width: 100%;">
+                    <div class="stage-info">
+                        <span class="stage-name">Total Impressions</span>
+                        <span class="stage-value">230,714</span>
+                    </div>
+                    <div class="stage-metrics">
+                        <span class="stage-percentage">100%</span>
+                    </div>
+                    <span class="dropoff-indicator">↓ 83.4% drop</span>
+                </div>
+            </div>
+            
+            <div class="funnel-stage">
+                <div class="funnel-bar" style="background: linear-gradient(135deg, #7c3aed, #6d28d9); width: 80%;">
+                    <div class="stage-info">
+                        <span class="stage-name">Clicked (Sessions)</span>
+                        <span class="stage-value">38,327</span>
+                    </div>
+                    <div class="stage-metrics">
+                        <span class="stage-percentage">16.6%</span>
+                    </div>
+                    <span class="dropoff-indicator">↓ 45.1% drop</span>
+                </div>
+            </div>
+            
+            <div class="funnel-stage">
+                <div class="funnel-bar" style="background: linear-gradient(135deg, #a855f7, #9333ea); width: 60%;">
+                    <div class="stage-info">
+                        <span class="stage-name">Engaged Sessions</span>
+                        <span class="stage-value">21,036</span>
+                    </div>
+                    <div class="stage-metrics">
+                        <span class="stage-percentage">9.1%</span>
+                    </div>
+                    <span class="dropoff-indicator">↓ 11.5% drop</span>
+                </div>
+            </div>
+            
+            <div class="funnel-stage">
+                <div class="funnel-bar" style="background: linear-gradient(135deg, #c084fc, #a855f7); width: 50%;">
+                    <div class="stage-info">
+                        <span class="stage-name">Active Users</span>
+                        <span class="stage-value">18,605</span>
+                    </div>
+                    <div class="stage-metrics">
+                        <span class="stage-percentage">8.1%</span>
+                    </div>
+                    <span class="dropoff-indicator">↓ 78.8% drop</span>
+                </div>
+            </div>
+            
+            <div class="funnel-stage">
+                <div class="funnel-bar" style="background: linear-gradient(135deg, #e9d5ff, #d8b4fe); width: 25%;">
+                    <div class="stage-info">
+                        <span class="stage-name">Returning Users</span>
+                        <span class="stage-value">3,938</span>
+                    </div>
+                    <div class="stage-metrics">
+                        <span class="stage-percentage">1.7%</span>
+                    </div>
+                    <span class="dropoff-indicator">↓ 70.2% drop</span>
+                </div>
+            </div>
+            
+            <div class="funnel-stage">
+                <div class="funnel-bar" style="background: linear-gradient(135deg, #f3e8ff, #ede9fe); width: 15%;">
+                    <div class="stage-info">
+                        <span class="stage-name">Key Events</span>
+                        <span class="stage-value">1,175</span>
+                    </div>
+                    <div class="stage-metrics">
+                        <span class="stage-percentage">0.5%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2 class="chart-title">Conversion Rate by Channel</h2>
+                <canvas id="channelConversionChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">User Journey Stages</h2>
+                <canvas id="journeyChart"></canvas>
+            </div>
+        </div>
+        
+        <h2 class="chart-title">Channel Conversion Performance</h2>
+        <table class="channel-table">
+            <thead>
+                <tr>
+                    <th>Channel</th>
+                    <th>Users</th>
+                    <th>Key Events</th>
+                    <th>Conversion Rate</th>
+                    <th>Performance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Direct</strong></td>
+                    <td>9,457</td>
+                    <td>1,075</td>
+                    <td style="color: #059669; font-weight: bold;">11.4%</td>
+                    <td>
+                        <div class="conv-bar">
+                            <div class="conv-fill" style="width: 100%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Organic Search</strong></td>
+                    <td>6,906</td>
+                    <td>80</td>
+                    <td style="color: #dc2626; font-weight: bold;">1.2%</td>
+                    <td>
+                        <div class="conv-bar">
+                            <div class="conv-fill" style="width: 10.5%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Referral</strong></td>
+                    <td>1,240</td>
+                    <td>14</td>
+                    <td style="color: #dc2626; font-weight: bold;">1.1%</td>
+                    <td>
+                        <div class="conv-bar">
+                            <div class="conv-fill" style="width: 9.6%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Organic Social</strong></td>
+                    <td>742</td>
+                    <td>5</td>
+                    <td style="color: #dc2626; font-weight: bold;">0.7%</td>
+                    <td>
+                        <div class="conv-bar">
+                            <div class="conv-fill" style="width: 6.1%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Other</strong></td>
+                    <td>260</td>
+                    <td>1</td>
+                    <td style="color: #dc2626; font-weight: bold;">0.4%</td>
+                    <td>
+                        <div class="conv-bar">
+                            <div class="conv-fill" style="width: 3.5%;"></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="bottleneck-section">
+            <h2 class="bottleneck-title">⚠️ Critical Bottlenecks Identified</h2>
+            <div class="bottleneck-list">
+                <div class="bottleneck-item">
+                    <div class="bottleneck-name">1. Impressions to Clicks (83.4% drop)</div>
+                    <div class="bottleneck-detail">Meta descriptions and titles need optimization. Current CTR of 2.1% is far below industry standard of 5%+</div>
+                </div>
+                <div class="bottleneck-item">
+                    <div class="bottleneck-name">2. Users to Returning Users (78.8% drop)</div>
+                    <div class="bottleneck-detail">Implement retention strategies: email campaigns, in-app engagement, value demonstration</div>
+                </div>
+                <div class="bottleneck-item">
+                    <div class="bottleneck-name">3. Users to Key Events (93.7% drop)</div>
+                    <div class="bottleneck-detail">Conversion paths need simplification. Consider reducing friction in signup/purchase process</div>
+                </div>
+                <div class="bottleneck-item">
+                    <div class="bottleneck-name">4. Organic Search Conversion (1.2% vs Direct 11.4%)</div>
+                    <div class="bottleneck-detail">Landing pages don't match search intent. Need targeted landing pages for search traffic</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Channel Conversion Chart
+        const channelCtx = document.getElementById('channelConversionChart').getContext('2d');
+        new Chart(channelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Direct', 'Organic Search', 'Referral', 'Social', 'Other'],
+                datasets: [{
+                    label: 'Conversion Rate (%)',
+                    data: [11.4, 1.2, 1.1, 0.7, 0.4],
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        if (value > 5) return 'rgba(16, 185, 129, 0.8)';
+                        if (value > 1) return 'rgba(251, 191, 36, 0.8)';
+                        return 'rgba(239, 68, 68, 0.8)';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 12
+                    }
+                }
+            }
+        });
+        
+        // User Journey Chart
+        const journeyCtx = document.getElementById('journeyChart').getContext('2d');
+        new Chart(journeyCtx, {
+            type: 'line',
+            data: {
+                labels: ['Impressions', 'Sessions', 'Engaged', 'Users', 'Returning', 'Events'],
+                datasets: [{
+                    label: 'User Count',
+                    data: [230714, 38327, 21036, 18605, 3938, 1175],
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointBackgroundColor: 'rgba(139, 92, 246, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'logarithmic',
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000) {
+                                    return (value / 1000) + 'K';
+                                }
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
