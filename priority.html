@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Priority Matrix - Cerebrium.ai</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+        
+        .matrix-container {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            height: 500px;
+            position: relative;
+        }
+        
+        .chart-title {
+            font-size: 1.25rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .quadrant-legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .quadrant-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .quadrant-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        .quadrant-text {
+            flex: 1;
+        }
+        
+        .quadrant-label {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.9rem;
+        }
+        
+        .quadrant-desc {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .action-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid;
+        }
+        
+        .action-section.quick-wins {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02));
+        }
+        
+        .action-section.major-projects {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.02));
+        }
+        
+        .action-section.fill-ins {
+            border-color: #fbbf24;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(251, 191, 36, 0.02));
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-icon {
+            margin-right: 8px;
+            font-size: 1.3rem;
+        }
+        
+        .action-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+        
+        .quick-wins .action-item {
+            border-color: #10b981;
+        }
+        
+        .major-projects .action-item {
+            border-color: #3b82f6;
+        }
+        
+        .fill-ins .action-item {
+            border-color: #fbbf24;
+        }
+        
+        .action-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .action-details {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+        
+        .action-impact {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 2px 6px;
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .timeline-section {
+            background: linear-gradient(135deg, #f0fdf4, #ecfccb);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .timeline-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-phase {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .phase-1 {
+            border-color: #10b981;
+        }
+        
+        .phase-2 {
+            border-color: #3b82f6;
+        }
+        
+        .phase-3 {
+            border-color: #8b5cf6;
+        }
+        
+        .phase-title {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .phase-items {
+            font-size: 0.9rem;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Strategic Action Priority Matrix</h1>
+        <p class="subtitle">Prioritized recommendations based on effort vs impact analysis</p>
+        
+        <div class="matrix-container">
+            <h2 class="chart-title">Impact vs Effort Matrix</h2>
+            <canvas id="matrixChart"></canvas>
+        </div>
+        
+        <div class="quadrant-legend">
+            <div class="quadrant-item">
+                <div class="quadrant-color" style="background: #10b981;"></div>
+                <div class="quadrant-text">
+                    <div class="quadrant-label">Quick Wins</div>
+                    <div class="quadrant-desc">Low Effort, High Impact</div>
+                </div>
+            </div>
+            <div class="quadrant-item">
+                <div class="quadrant-color" style="background: #3b82f6;"></div>
+                <div class="quadrant-text">
+                    <div class="quadrant-label">Major Projects</div>
+                    <div class="quadrant-desc">High Effort, High Impact</div>
+                </div>
+            </div>
+            <div class="quadrant-item">
+                <div class="quadrant-color" style="background: #fbbf24;"></div>
+                <div class="quadrant-text">
+                    <div class="quadrant-label">Fill Ins</div>
+                    <div class="quadrant-desc">Low Effort, Low Impact</div>
+                </div>
+            </div>
+            <div class="quadrant-item">
+                <div class="quadrant-color" style="background: #ef4444;"></div>
+                <div class="quadrant-text">
+                    <div class="quadrant-label">Consider Skipping</div>
+                    <div class="quadrant-desc">High Effort, Low Impact</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="actions-grid">
+            <div class="action-section quick-wins">
+                <div class="section-title">
+                    <span class="section-icon">🎯</span>
+                    Quick Wins - Start Immediately
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Optimize Meta Descriptions</div>
+                    <div class="action-details">1 week • SEO</div>
+                    <div class="action-impact">+2000 clicks/month</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Fix Pricing Page Bounce Rate</div>
+                    <div class="action-details">2 weeks • UX</div>
+                    <div class="action-impact">+400 engaged users</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Add GPU Pricing Calculator</div>
+                    <div class="action-details">1 week • Content</div>
+                    <div class="action-impact">+5000 visits/month</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Implement Exit-Intent Popups</div>
+                    <div class="action-details">3 days • Conversion</div>
+                    <div class="action-impact">+100 leads/month</div>
+                </div>
+            </div>
+            
+            <div class="action-section major-projects">
+                <div class="section-title">
+                    <span class="section-icon">🚀</span>
+                    Major Projects - Plan Resources
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Build ML Deployment Content Hub</div>
+                    <div class="action-details">2 months • Content</div>
+                    <div class="action-impact">+10000 organic visits</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Develop Referral Program</div>
+                    <div class="action-details">6 weeks • Growth</div>
+                    <div class="action-impact">+500 new users/month</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Create Interactive Product Demos</div>
+                    <div class="action-details">2 months • Product</div>
+                    <div class="action-impact">2x conversion rate</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Launch South Africa Campaign</div>
+                    <div class="action-details">1 month • Marketing</div>
+                    <div class="action-impact">+1000 users</div>
+                </div>
+            </div>
+            
+            <div class="action-section fill-ins">
+                <div class="section-title">
+                    <span class="section-icon">⏱️</span>
+                    Fill Ins - When Time Allows
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Update Blog Content</div>
+                    <div class="action-details">1 week • Content</div>
+                    <div class="action-impact">-10% blog bounce</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Add Breadcrumb Navigation</div>
+                    <div class="action-details">2 days • UX</div>
+                    <div class="action-impact">Better UX</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Fix 404 Errors</div>
+                    <div class="action-details">1 day • Technical</div>
+                    <div class="action-impact">Improved crawlability</div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-name">Add Schema Markup</div>
+                    <div class="action-details">3 days • SEO</div>
+                    <div class="action-impact">Rich snippets</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="timeline-section">
+            <h2 class="timeline-title">📅 90-Day Implementation Roadmap</h2>
+            
+            <div class="timeline-phase phase-1">
+                <div class="phase-title">🏃 Weeks 1-2: Quick Wins</div>
+                <div class="phase-items">
+                    • Optimize all meta descriptions<br>
+                    • Launch GPU pricing calculator<br>
+                    • Implement exit-intent popups<br>
+                    • Start A/B testing pricing page
+                </div>
+            </div>
+            
+            <div class="timeline-phase phase-2">
+                <div class="phase-title">📊 Month 1: Foundation</div>
+                <div class="phase-items">
+                    • Complete pricing page optimization<br>
+                    • Launch retargeting campaigns<br>
+                    • Begin content hub development<br>
+                    • Implement basic referral system
+                </div>
+            </div>
+            
+            <div class="timeline-phase phase-3">
+                <div class="phase-title">🚀 Months 2-3: Scale</div>
+                <div class="phase-items">
+                    • Launch ML deployment content hub<br>
+                    • Complete interactive demos<br>
+                    • Execute South Africa campaign<br>
+                    • Full referral program rollout
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Priority Matrix Chart
+        const ctx = document.getElementById('matrixChart').getContext('2d');
+        
+        const data = {
+            datasets: [{
+                label: 'Quick Wins',
+                data: [
+                    {x: 2, y: 8, label: 'Optimize meta descriptions'},
+                    {x: 3, y: 7, label: 'Fix pricing page'},
+                    {x: 3, y: 9, label: 'GPU pricing calculator'},
+                    {x: 2, y: 6, label: 'Exit-intent popups'}
+                ],
+                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                pointRadius: 8
+            }, {
+                label: 'Major Projects',
+                data: [
+                    {x: 8, y: 9, label: 'ML content hub'},
+                    {x: 7, y: 8, label: 'Referral program'},
+                    {x: 9, y: 8, label: 'Interactive demos'},
+                    {x: 6, y: 7, label: 'South Africa campaign'}
+                ],
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                pointRadius: 8
+            }, {
+                label: 'Fill Ins',
+                data: [
+                    {x: 2, y: 3, label: 'Update blog'},
+                    {x: 1, y: 2, label: 'Breadcrumbs'},
+                    {x: 1, y: 3, label: 'Fix 404s'},
+                    {x: 2, y: 4, label: 'Schema markup'}
+                ],
+                backgroundColor: 'rgba(251, 191, 36, 0.8)',
+                pointRadius: 8
+            }, {
+                label: 'Low Priority',
+                data: [
+                    {x: 6, y: 2, label: 'Redesign about'},
+                    {x: 8, y: 4, label: 'Custom analytics'},
+                    {x: 9, y: 3, label: 'CMS migration'}
+                ],
+                backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                pointRadius: 8
+            }]
+        };
+        
+        new Chart(ctx, {
+            type: 'scatter',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.raw.label || '';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        min: 0,
+                        max: 10,
+                        title: {
+                            display: true,
+                            text: 'Effort Required →'
+                        },
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        max: 10,
+                        title: {
+                            display: true,
+                            text: 'Business Impact →'
+                        },
+                        grid: {
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Draw quadrant lines
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        
+        // This would need to be adjusted based on actual canvas dimensions
+        // Just showing the concept here
+    </script>
+</body>
+</html>
