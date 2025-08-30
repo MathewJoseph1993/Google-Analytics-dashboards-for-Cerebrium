@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel Performance - Cerebrium.ai</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+            border-radius: 15px;
+            padding: 20px;
+            height: 400px;
+            position: relative;
+            border: 1px solid #e9d5ff;
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .channel-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .channel-table th {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .channel-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .channel-table tr:hover {
+            background: #faf5ff;
+        }
+        
+        .performance-bar {
+            height: 8px;
+            background: #e9d5ff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .performance-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a855f7, #7c3aed);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #e9d5ff;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.875rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            color: #2d3748;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .insight-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .insight-card {
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+        }
+        
+        .insight-card.best {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .insight-card.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .insight-card.opportunity {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        
+        .insight-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .insight-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Channel Performance Analysis</h1>
+        <p class="subtitle">Comprehensive breakdown of user acquisition and engagement by channel</p>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Channels</div>
+                <div class="stat-value">9</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Best Performer</div>
+                <div class="stat-value">Direct</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Highest Conv.</div>
+                <div class="stat-value">11.4%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value">18,605</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Events</div>
+                <div class="stat-value">1,175</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Conv. Rate</div>
+                <div class="stat-value">6.3%</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2 class="chart-title">Users by Channel</h2>
+                <canvas id="usersChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">Engagement Time by Channel</h2>
+                <canvas id="engagementChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">Channel Distribution</h2>
+                <canvas id="pieChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">Conversion Rate Comparison</h2>
+                <canvas id="conversionChart"></canvas>
+            </div>
+        </div>
+        
+        <h2 class="chart-title">Detailed Channel Metrics</h2>
+        <table class="channel-table">
+            <thead>
+                <tr>
+                    <th>Channel</th>
+                    <th>Users</th>
+                    <th>% of Total</th>
+                    <th>New Users</th>
+                    <th>Returning</th>
+                    <th>Engagement</th>
+                    <th>Key Events</th>
+                    <th>Conv. Rate</th>
+                    <th>Performance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Direct</strong></td>
+                    <td>9,457</td>
+                    <td>50.8%</td>
+                    <td>9,675</td>
+                    <td>1,877</td>
+                    <td>204s</td>
+                    <td>1,075</td>
+                    <td style="color: #059669; font-weight: bold;">11.4%</td>
+                    <td>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 100%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Organic Search</strong></td>
+                    <td>6,906</td>
+                    <td>37.1%</td>
+                    <td>6,804</td>
+                    <td>1,591</td>
+                    <td>80s</td>
+                    <td>80</td>
+                    <td style="color: #dc2626; font-weight: bold;">1.2%</td>
+                    <td>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 10.5%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Referral</strong></td>
+                    <td>1,240</td>
+                    <td>6.7%</td>
+                    <td>1,217</td>
+                    <td>328</td>
+                    <td>117s</td>
+                    <td>14</td>
+                    <td style="color: #dc2626; font-weight: bold;">1.1%</td>
+                    <td>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 9.6%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Organic Social</strong></td>
+                    <td>742</td>
+                    <td>4.0%</td>
+                    <td>745</td>
+                    <td>118</td>
+                    <td>47s</td>
+                    <td>5</td>
+                    <td style="color: #dc2626; font-weight: bold;">0.7%</td>
+                    <td>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 6.1%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Other</strong></td>
+                    <td>260</td>
+                    <td>1.4%</td>
+                    <td>212</td>
+                    <td>24</td>
+                    <td>36s</td>
+                    <td>1</td>
+                    <td style="color: #dc2626; font-weight: bold;">0.4%</td>
+                    <td>
+                        <div class="performance-bar">
+                            <div class="performance-fill" style="width: 3.5%;"></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="insight-cards">
+            <div class="insight-card best">
+                <div class="insight-title">⭐ Best Performer</div>
+                <div class="insight-text">
+                    Direct traffic dominates with 50.8% of users and an excellent 11.4% conversion rate. This indicates strong brand recognition and user intent.
+                </div>
+            </div>
+            
+            <div class="insight-card warning">
+                <div class="insight-title">⚠️ Needs Attention</div>
+                <div class="insight-text">
+                    Organic Search has 37.1% of users but only 1.2% conversion rate. Landing pages need optimization to match search intent better.
+                </div>
+            </div>
+            
+            <div class="insight-card opportunity">
+                <div class="insight-title">📈 Growth Opportunity</div>
+                <div class="insight-text">
+                    Referral traffic is only 6.7% but shows decent engagement. Building partnerships could significantly expand this channel.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Users by Channel
+        const usersCtx = document.getElementById('usersChart').getContext('2d');
+        new Chart(usersCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Direct', 'Organic Search', 'Referral', 'Social', 'Other'],
+                datasets: [{
+                    label: 'Users',
+                    data: [9457, 6906, 1240, 742, 260],
+                    backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                    borderColor: 'rgba(168, 85, 247, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Engagement Time
+        const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+        new Chart(engagementCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Direct', 'Organic Search', 'Referral', 'Social', 'Other'],
+                datasets: [{
+                    label: 'Avg. Engagement (seconds)',
+                    data: [204, 80, 117, 47, 36],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(148, 163, 184, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Direct (50.8%)', 'Organic Search (37.1%)', 'Referral (6.7%)', 'Social (4.0%)', 'Other (1.4%)'],
+                datasets: [{
+                    data: [9457, 6906, 1240, 742, 260],
+                    backgroundColor: [
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(124, 58, 237, 0.8)',
+                        'rgba(196, 181, 253, 0.8)',
+                        'rgba(233, 213, 255, 0.8)',
+                        'rgba(243, 232, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Conversion Rate
+        const conversionCtx = document.getElementById('conversionChart').getContext('2d');
+        new Chart(conversionCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Direct', 'Organic Search', 'Referral', 'Social', 'Other'],
+                datasets: [{
+                    label: 'Conversion Rate (%)',
+                    data: [11.4, 1.2, 1.1, 0.7, 0.4],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 12
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
