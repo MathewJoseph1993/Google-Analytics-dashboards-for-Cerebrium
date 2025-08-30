@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Page Performance - Cerebrium.ai</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #14b8a6, #0d9488);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+        
+        .performance-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid;
+        }
+        
+        .critical { border-color: #ef4444; background: #fef2f2; }
+        .warning { border-color: #f59e0b; background: #fffbeb; }
+        .good { border-color: #10b981; background: #f0fdf4; }
+        .growth { border-color: #3b82f6; background: #eff6ff; }
+        
+        .summary-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .summary-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
+            border-radius: 15px;
+            padding: 20px;
+            height: 400px;
+            position: relative;
+            border: 1px solid #99f6e4;
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            color: #0f766e;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .pages-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .pages-table th {
+            background: linear-gradient(135deg, #14b8a6, #0d9488);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .pages-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .pages-table tr:hover {
+            background: #f0fdfa;
+        }
+        
+        .bounce-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .bounce-good { background: #d1fae5; color: #065f46; }
+        .bounce-medium { background: #fed7aa; color: #92400e; }
+        .bounce-bad { background: #fee2e2; color: #991b1b; }
+        
+        .status-icon {
+            font-size: 1.2rem;
+        }
+        
+        .recommendation-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .recommendation-card {
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+        }
+        
+        .recommendation-card.critical {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .recommendation-card.optimization {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .recommendation-card.maintain {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .recommendation-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .recommendation-item {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .recommendation-item:last-child {
+            border-bottom: none;
+        }
+        
+        .page-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .page-issue {
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Landing Page Performance Analysis</h1>
+        <p class="subtitle">Identifying high-impact pages for optimization</p>
+        
+        <div class="performance-summary">
+            <div class="summary-card critical">
+                <div class="summary-icon">🚨</div>
+                <div class="summary-value">2</div>
+                <div class="summary-label">Critical Issues</div>
+            </div>
+            <div class="summary-card warning">
+                <div class="summary-icon">⚠️</div>
+                <div class="summary-value">3</div>
+                <div class="summary-label">Needs Work</div>
+            </div>
+            <div class="summary-card good">
+                <div class="summary-icon">✅</div>
+                <div class="summary-value">2</div>
+                <div class="summary-label">Star Performers</div>
+            </div>
+            <div class="summary-card growth">
+                <div class="summary-icon">📈</div>
+                <div class="summary-value">3</div>
+                <div class="summary-label">Growth Potential</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2 class="chart-title">Sessions by Page</h2>
+                <canvas id="sessionsChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">Bounce Rate Comparison</h2>
+                <canvas id="bounceChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">Engagement Rate by Page</h2>
+                <canvas id="engagementChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">Bounce Rate vs Sessions Matrix</h2>
+                <canvas id="matrixChart"></canvas>
+            </div>
+        </div>
+        
+        <h2 class="chart-title">Page Performance Details</h2>
+        <table class="pages-table">
+            <thead>
+                <tr>
+                    <th>Page</th>
+                    <th>Sessions</th>
+                    <th>Bounce Rate</th>
+                    <th>Engagement</th>
+                    <th>Avg Time</th>
+                    <th>Key Events</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Homepage (/)</strong></td>
+                    <td>15,234</td>
+                    <td><span class="bounce-indicator bounce-medium">42.3%</span></td>
+                    <td>57.7%</td>
+                    <td>186s</td>
+                    <td>823</td>
+                    <td><span class="status-icon">🚨</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Documentation (/docs)</strong></td>
+                    <td>8,432</td>
+                    <td><span class="bounce-indicator bounce-good">38.1%</span></td>
+                    <td>61.9%</td>
+                    <td>342s</td>
+                    <td>234</td>
+                    <td><span class="status-icon">✅</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Pricing (/pricing)</strong></td>
+                    <td>3,821</td>
+                    <td><span class="bounce-indicator bounce-bad">51.2%</span></td>
+                    <td>48.8%</td>
+                    <td>124s</td>
+                    <td>67</td>
+                    <td><span class="status-icon">🚨</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Login (/login)</strong></td>
+                    <td>2,156</td>
+                    <td><span class="bounce-indicator bounce-good">28.4%</span></td>
+                    <td>71.6%</td>
+                    <td>89s</td>
+                    <td>12</td>
+                    <td><span class="status-icon">✅</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Blog (/blog)</strong></td>
+                    <td>1,893</td>
+                    <td><span class="bounce-indicator bounce-bad">63.2%</span></td>
+                    <td>36.8%</td>
+                    <td>234s</td>
+                    <td>8</td>
+                    <td><span class="status-icon">⚠️</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Features (/features)</strong></td>
+                    <td>1,456</td>
+                    <td><span class="bounce-indicator bounce-medium">45.6%</span></td>
+                    <td>54.4%</td>
+                    <td>198s</td>
+                    <td>21</td>
+                    <td><span class="status-icon">⚠️</span></td>
+                </tr>
+                <tr>
+                    <td><strong>About (/about)</strong></td>
+                    <td>987</td>
+                    <td><span class="bounce-indicator bounce-bad">52.3%</span></td>
+                    <td>47.7%</td>
+                    <td>145s</td>
+                    <td>4</td>
+                    <td><span class="status-icon">⚠️</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Contact (/contact)</strong></td>
+                    <td>654</td>
+                    <td><span class="bounce-indicator bounce-good">35.2%</span></td>
+                    <td>64.8%</td>
+                    <td>167s</td>
+                    <td>3</td>
+                    <td><span class="status-icon">📈</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Dashboard (/dashboard)</strong></td>
+                    <td>543</td>
+                    <td><span class="bounce-indicator bounce-good">22.1%</span></td>
+                    <td>77.9%</td>
+                    <td>456s</td>
+                    <td>2</td>
+                    <td><span class="status-icon">📈</span></td>
+                </tr>
+                <tr>
+                    <td><strong>API Docs (/api)</strong></td>
+                    <td>432</td>
+                    <td><span class="bounce-indicator bounce-medium">41.3%</span></td>
+                    <td>58.7%</td>
+                    <td>289s</td>
+                    <td>1</td>
+                    <td><span class="status-icon">📈</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="recommendation-cards">
+            <div class="recommendation-card critical">
+                <div class="recommendation-title">🚨 Critical Priority Pages</div>
+                <div class="recommendation-item">
+                    <div class="page-name">Homepage (/)</div>
+                    <div class="page-issue">15,234 sessions • 42.3% bounce<br>
+                    Action: Improve above-fold content, clear CTAs<br>
+                    Goal: Reduce bounce to <35%</div>
+                </div>
+                <div class="recommendation-item">
+                    <div class="page-name">Pricing (/pricing)</div>
+                    <div class="page-issue">3,821 sessions • 51.2% bounce<br>
+                    Action: Simplify pricing, add comparison table<br>
+                    Goal: Reduce bounce to <40%</div>
+                </div>
+            </div>
+            
+            <div class="recommendation-card optimization">
+                <div class="recommendation-title">⚠️ Optimization Opportunities</div>
+                <div class="recommendation-item">
+                    <div class="page-name">Blog (/blog)</div>
+                    <div class="page-issue">63.2% bounce rate<br>
+                    Improve content relevance and internal linking</div>
+                </div>
+                <div class="recommendation-item">
+                    <div class="page-name">Features (/features)</div>
+                    <div class="page-issue">45.6% bounce rate<br>
+                    Add interactive demos and videos</div>
+                </div>
+                <div class="recommendation-item">
+                    <div class="page-name">About (/about)</div>
+                    <div class="page-issue">52.3% bounce rate<br>
+                    Update content and add team info</div>
+                </div>
+            </div>
+            
+            <div class="recommendation-card maintain">
+                <div class="recommendation-title">✅ Best Practices to Maintain</div>
+                <div class="recommendation-item">
+                    <div class="page-name">Documentation (/docs)</div>
+                    <div class="page-issue">Excellent engagement at 61.9%<br>
+                    Keep current approach</div>
+                </div>
+                <div class="recommendation-item">
+                    <div class="page-name">Login (/login)</div>
+                    <div class="page-issue">Low 28.4% bounce rate<br>
+                    Well optimized</div>
+                </div>
+                <div class="recommendation-item">
+                    <div class="page-name">Dashboard (/dashboard)</div>
+                    <div class="page-issue">Highest engagement at 77.9%<br>
+                    Excellent UX</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sessions Chart
+        const sessionsCtx = document.getElementById('sessionsChart').getContext('2d');
+        new Chart(sessionsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Homepage', 'Docs', 'Pricing', 'Login', 'Blog', 'Features', 'About', 'Contact', 'Dashboard', 'API'],
+                datasets: [{
+                    label: 'Sessions',
+                    data: [15234, 8432, 3821, 2156, 1893, 1456, 987, 654, 543, 432],
+                    backgroundColor: function(context) {
+                        const bounceRates = [42.3, 38.1, 51.2, 28.4, 63.2, 45.6, 52.3, 35.2, 22.1, 41.3];
+                        const value = bounceRates[context.dataIndex];
+                        if (value > 50) return 'rgba(239, 68, 68, 0.8)';
+                        if (value > 40) return 'rgba(251, 191, 36, 0.8)';
+                        return 'rgba(16, 185, 129, 0.8)';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Bounce Rate Chart
+        const bounceCtx = document.getElementById('bounceChart').getContext('2d');
+        new Chart(bounceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Blog', 'About', 'Pricing', 'Features', 'Homepage', 'API', 'Docs', 'Contact', 'Login', 'Dashboard'],
+                datasets: [{
+                    label: 'Bounce Rate (%)',
+                    data: [63.2, 52.3, 51.2, 45.6, 42.3, 41.3, 38.1, 35.2, 28.4, 22.1],
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        if (value > 50) return 'rgba(239, 68, 68, 0.8)';
+                        if (value > 40) return 'rgba(251, 191, 36, 0.8)';
+                        return 'rgba(16, 185, 129, 0.8)';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 70
+                    }
+                }
+            }
+        });
+        
+        // Engagement Chart
+        const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+        new Chart(engagementCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Dashboard', 'Login', 'Contact', 'Docs', 'API', 'Homepage', 'Features', 'Pricing', 'About', 'Blog'],
+                datasets: [{
+                    label: 'Engagement Rate (%)',
+                    data: [77.9, 71.6, 64.8, 61.9, 58.7, 57.7, 54.4, 48.8, 47.7, 36.8],
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        if (value > 60) return 'rgba(16, 185, 129, 0.8)';
+                        if (value > 50) return 'rgba(251, 191, 36, 0.8)';
+                        return 'rgba(239, 68, 68, 0.8)';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 80
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Matrix Chart
+        const matrixCtx = document.getElementById('matrixChart').getContext('2d');
+        new Chart(matrixCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Pages',
+                    data: [
+                        {x: 42.3, y: 15234, label: 'Homepage'},
+                        {x: 38.1, y: 8432, label: 'Docs'},
+                        {x: 51.2, y: 3821, label: 'Pricing'},
+                        {x: 28.4, y: 2156, label: 'Login'},
+                        {x: 63.2, y: 1893, label: 'Blog'},
+                        {x: 45.6, y: 1456, label: 'Features'},
+                        {x: 52.3, y: 987, label: 'About'},
+                        {x: 35.2, y: 654, label: 'Contact'},
+                        {x: 22.1, y: 543, label: 'Dashboard'},
+                        {x: 41.3, y: 432, label: 'API'}
+                    ],
+                    backgroundColor: function(context) {
+                        const bounceRate = context.parsed.x;
+                        const sessions = context.parsed.y;
+                        if (bounceRate < 40 && sessions > 1000) return 'rgba(16, 185, 129, 0.8)';
+                        if (bounceRate > 50 && sessions > 3000) return 'rgba(239, 68, 68, 0.8)';
+                        if (bounceRate > 50) return 'rgba(251, 191, 36, 0.8)';
+                        return 'rgba(59, 130, 246, 0.8)';
+                    },
+                    pointRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.raw.label + ': ' + context.parsed.y + ' sessions, ' + context.parsed.x + '% bounce';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Bounce Rate (%)'
+                        },
+                        min: 20,
+                        max: 70
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Sessions'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
