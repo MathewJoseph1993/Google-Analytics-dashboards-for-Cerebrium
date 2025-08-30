@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geographic Distribution - Cerebrium.ai</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ecfeff, #cffafe);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #a5f3fc;
+        }
+        
+        .stat-label {
+            color: #0e7490;
+            font-size: 0.75rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            color: #0c4a6e;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: linear-gradient(135deg, #ecfeff, #cffafe);
+            border-radius: 15px;
+            padding: 20px;
+            height: 400px;
+            position: relative;
+            border: 1px solid #a5f3fc;
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            color: #0c4a6e;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .countries-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .countries-table th {
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .countries-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .countries-table tr:hover {
+            background: #ecfeff;
+        }
+        
+        .engagement-bar {
+            height: 8px;
+            background: #e0f2fe;
+            border-radius: 4px;
+            overflow: hidden;
+            width: 100px;
+            display: inline-block;
+        }
+        
+        .engagement-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0891b2, #06b6d4);
+            border-radius: 4px;
+        }
+        
+        .region-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .region-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid;
+            text-align: center;
+        }
+        
+        .americas { border-color: #3b82f6; }
+        .europe { border-color: #8b5cf6; }
+        .asia { border-color: #f59e0b; }
+        .africa { border-color: #10b981; }
+        .others { border-color: #6b7280; }
+        
+        .region-name {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .region-stats {
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+        
+        .opportunity-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .opportunity-card {
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+        }
+        
+        .opportunity-card.high {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .opportunity-card.medium {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .opportunity-card.growth {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        
+        .opportunity-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .opportunity-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .opportunity-list {
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .opportunity-list li {
+            margin-bottom: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Geographic Distribution Analysis</h1>
+        <p class="subtitle">Global reach across 159 countries with regional performance insights</p>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Countries</div>
+                <div class="stat-value">159</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">US Share</div>
+                <div class="stat-value">27.6%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Top Market</div>
+                <div class="stat-value">USA</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Best Engagement</div>
+                <div class="stat-value">Pakistan</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Growth Market</div>
+                <div class="stat-value">S. Africa</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value">17,053</div>
+            </div>
+        </div>
+        
+        <div class="region-cards">
+            <div class="region-card americas">
+                <div class="region-name">Americas</div>
+                <div class="region-stats">
+                    5,317 users (31.2%)<br>
+                    3 countries
+                </div>
+            </div>
+            <div class="region-card europe">
+                <div class="region-name">Europe</div>
+                <div class="region-stats">
+                    2,014 users (11.8%)<br>
+                    3 countries
+                </div>
+            </div>
+            <div class="region-card asia">
+                <div class="region-name">Asia</div>
+                <div class="region-stats">
+                    2,443 users (14.3%)<br>
+                    3 countries
+                </div>
+            </div>
+            <div class="region-card africa">
+                <div class="region-name">Africa</div>
+                <div class="region-stats">
+                    2,075 users (12.2%)<br>
+                    1 country
+                </div>
+            </div>
+            <div class="region-card others">
+                <div class="region-name">Others</div>
+                <div class="region-stats">
+                    5,204 users (30.5%)<br>
+                    149 countries
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2 class="chart-title">Top 10 Countries by Users</h2>
+                <canvas id="countriesChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h2 class="chart-title">Engagement Rate by Country</h2>
+                <canvas id="engagementChart"></canvas>
+            </div>
+        </div>
+        
+        <h2 class="chart-title">Top Countries Performance</h2>
+        <table class="countries-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Country</th>
+                    <th>Active Users</th>
+                    <th>% of Total</th>
+                    <th>Engagement Rate</th>
+                    <th>Key Events</th>
+                    <th>Opportunity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td><strong>United States</strong></td>
+                    <td>4,713</td>
+                    <td>27.6%</td>
+                    <td>
+                        55.4%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 55.4%;"></div>
+                        </div>
+                    </td>
+                    <td>212</td>
+                    <td><span style="color: #059669;">Maintain</span></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><strong>South Africa</strong></td>
+                    <td>2,075</td>
+                    <td>12.2%</td>
+                    <td>
+                        60.0%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 60%;"></div>
+                        </div>
+                    </td>
+                    <td>109</td>
+                    <td><span style="color: #dc2626; font-weight: bold;">HIGH</span></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><strong>India</strong></td>
+                    <td>1,826</td>
+                    <td>10.7%</td>
+                    <td>
+                        56.6%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 56.6%;"></div>
+                        </div>
+                    </td>
+                    <td>180</td>
+                    <td><span style="color: #dc2626; font-weight: bold;">HIGH</span></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><strong>Germany</strong></td>
+                    <td>843</td>
+                    <td>4.9%</td>
+                    <td>
+                        50.6%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 50.6%;"></div>
+                        </div>
+                    </td>
+                    <td>40</td>
+                    <td><span style="color: #f59e0b;">Medium</span></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><strong>United Kingdom</strong></td>
+                    <td>827</td>
+                    <td>4.8%</td>
+                    <td>
+                        55.5%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 55.5%;"></div>
+                        </div>
+                    </td>
+                    <td>52</td>
+                    <td><span style="color: #f59e0b;">Medium</span></td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td><strong>France</strong></td>
+                    <td>344</td>
+                    <td>2.0%</td>
+                    <td>
+                        58.4%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 58.4%;"></div>
+                        </div>
+                    </td>
+                    <td>14</td>
+                    <td><span style="color: #6b7280;">Low</span></td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td><strong>China</strong></td>
+                    <td>319</td>
+                    <td>1.9%</td>
+                    <td>
+                        46.9%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 46.9%;"></div>
+                        </div>
+                    </td>
+                    <td>11</td>
+                    <td><span style="color: #f59e0b;">Medium</span></td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td><strong>Canada</strong></td>
+                    <td>315</td>
+                    <td>1.8%</td>
+                    <td>
+                        54.7%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 54.7%;"></div>
+                        </div>
+                    </td>
+                    <td>26</td>
+                    <td><span style="color: #6b7280;">Low</span></td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><strong>Pakistan</strong></td>
+                    <td>298</td>
+                    <td>1.7%</td>
+                    <td>
+                        63.2%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 63.2%;"></div>
+                        </div>
+                    </td>
+                    <td>74</td>
+                    <td><span style="color: #f59e0b;">Medium</span></td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td><strong>Brazil</strong></td>
+                    <td>289</td>
+                    <td>1.7%</td>
+                    <td>
+                        51.0%
+                        <div class="engagement-bar">
+                            <div class="engagement-fill" style="width: 51%;"></div>
+                        </div>
+                    </td>
+                    <td>15</td>
+                    <td><span style="color: #6b7280;">Low</span></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="opportunity-cards">
+            <div class="opportunity-card high">
+                <div class="opportunity-title">🚀 High Priority Markets</div>
+                <div class="opportunity-text">
+                    Focus immediate expansion efforts on:
+                </div>
+                <ul class="opportunity-list">
+                    <li><strong>South Africa:</strong> 2,075 users, 60% engagement - highest engagement rate</li>
+                    <li><strong>India:</strong> 1,826 users, 56.6% engagement - large growing market</li>
+                </ul>
+            </div>
+            
+            <div class="opportunity-card medium">
+                <div class="opportunity-title">⚡ Medium Priority</div>
+                <div class="opportunity-text">
+                    Consider targeted campaigns for:
+                </div>
+                <ul class="opportunity-list">
+                    <li><strong>Pakistan:</strong> Best engagement (63.2%) but small base</li>
+                    <li><strong>China:</strong> Massive market potential</li>
+                    <li><strong>Germany/UK:</strong> Strong European presence</li>
+                </ul>
+            </div>
+            
+            <div class="opportunity-card growth">
+                <div class="opportunity-title">📋 Strategic Actions</div>
+                <div class="opportunity-text">
+                    Recommended geographic strategy:
+                </div>
+                <ul class="opportunity-list">
+                    <li>Launch South Africa marketing campaign</li>
+                    <li>Develop India-specific pricing tiers</li>
+                    <li>Create localized content for top 5 markets</li>
+                    <li>Reduce US dependency from 27.6% to <25%</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Countries Chart
+        const countriesCtx = document.getElementById('countriesChart').getContext('2d');
+        new Chart(countriesCtx, {
+            type: 'bar',
+            data: {
+                labels: ['USA', 'S. Africa', 'India', 'Germany', 'UK', 'France', 'China', 'Canada', 'Pakistan', 'Brazil'],
+                datasets: [{
+                    label: 'Active Users',
+                    data: [4713, 2075, 1826, 843, 827, 344, 319, 315, 298, 289],
+                    backgroundColor: 'rgba(8, 145, 178, 0.8)',
+                    borderColor: 'rgba(8, 145, 178, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Engagement Chart
+        const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+        new Chart(engagementCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Pakistan', 'S. Africa', 'France', 'India', 'UK', 'USA', 'Canada', 'Brazil', 'Germany', 'China'],
+                datasets: [{
+                    label: 'Engagement Rate (%)',
+                    data: [63.2, 60.0, 58.4, 56.6, 55.5, 55.4, 54.7, 51.0, 50.6, 46.9],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 70
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
